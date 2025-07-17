@@ -1,0 +1,7 @@
+self.travel_dates = [
+    TravelDate("2025-08-15", "2025-08-17", "Module 1"),
+    TravelDate("2025-09-12", "2025-09-14", "Module 2"),
+    TravelDate("2025-10-10", "2025-10-12", "Module 3"),
+    # Add ALL your EMBA travel dates here
+    # Format: TravelDate("YYYY-MM-DD", "YYYY-MM-DD", "Module Name")
+]
