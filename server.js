@@ -16,14 +16,19 @@ async function getAccessToken() {
   const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
 
   try {
-    const response = await axios.post('https://test.api.amadeus.com/v1/security/oauth2/token', null, {
-      params: {
-        grant_type: 'client_credentials',
-        client_id: clientId,
-        client_secret: clientSecret
-      },
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
+    const params = new URLSearchParams();
+params.append("grant_type", "client_credentials");
+params.append("client_id", AMADEUS_CLIENT_ID);
+params.append("client_secret", AMADEUS_CLIENT_SECRET);
+
+const response = await axios.post(
+  "https://test.api.amadeus.com/v1/security/oauth2/token",
+  params.toString(),
+  {
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  });
 
     return response.data.access_token;
   } catch (err) {
