@@ -34,19 +34,15 @@ async function getAccessToken() {
 app.post("/getFlightOffers", async (req, res) => {
   try {
     const { origin, destination, departureDate, returnDate } = req.body;
-
-    // Step 1: Log the incoming request
     console.log("Incoming request:", req.body);
 
     if (!origin || !destination || !departureDate) {
+      console.error("Missing fields");
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const token = await getAccessToken();
-
-    // Step 2: Log the token and Amadeus request
-    console.log("Access Token:", token);
-    console.log("Calling Amadeus API...");
+    console.log("Access token obtained:", token.slice(0, 10) + "...");
 
     const response = await axios.get("https://test.api.amadeus.com/v2/shopping/flight-offers", {
       headers: { Authorization: `Bearer ${token}` },
@@ -61,14 +57,11 @@ app.post("/getFlightOffers", async (req, res) => {
       },
     });
 
-    // Step 3: Log the response
-    console.log("Amadeus response:", response.data);
-
+    console.log("Flight response received.");
     res.json(response.data);
   } catch (err) {
-    // Step 4: Log the error details
-    console.error("Error fetching flight offers:", err.response?.data || err.message);
-    res.status(500).json({ error: err.response?.data || err.message });
+    console.error("Error in /getFlightOffers:", err.response?.data || err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
