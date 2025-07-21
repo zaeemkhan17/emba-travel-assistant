@@ -64,9 +64,9 @@ const response = await axios.get("https://test.api.amadeus.com/v2/shopping/fligh
     console.log("Flight response received.");
     res.json(response.data);
   } catch (err) {
-    console.error("Error in /getFlightOffers:", err.response?.data || err.message);
-    res.status(500).json({ error: err.message });
-  }
+  console.error("Amadeus API error:", err.response?.data || err.message);
+  res.status(500).json({ error: err.response?.data || err.message });
+}
 });
 
 app.post("/getHotelOffers", async (req, res) => {
