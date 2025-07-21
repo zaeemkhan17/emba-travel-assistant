@@ -1,113 +1,118 @@
-const express = require("express");
-const axios = require("axios");
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 10000;
 
-const PORT = process.env.PORT || 3000;
+// Middleware
+app.use(cors());
+app.use(express.json()); // ⬅️ Ensures req.body is parsed correctly
 
-const AMADEUS_CLIENT_ID = "NAmg8wPrqGt2zsaLQBOWfDEiVGhXdrCP";
-const AMADEUS_CLIENT_SECRET = "8cSLcbcQVqpxrxKO";
-
-let cachedToken = null;
-let tokenExpiry = null;
-
+// === Amadeus Token Fetch ===
 async function getAccessToken() {
-  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
-    return cachedToken;
+  const clientId = "NAmg8wPrqGt2zsaLQBOWfDEiVGhXdrCP";
+  const clientSecret = "8cSLcbcQVqpxrxKO";
+
+  try {
+    const response = await axios.post('https://test.api.amadeus.com/v1/security/oauth2/token', null, {
+      params: {
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret
+      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+
+    return response.data.access_token;
+  } catch (err) {
+    console.error('Failed to get Amadeus token:', err.message);
+    throw err;
+  }
+}
+
+// === Flight Offers ===
+app.post('/getFlightOffers', async (req, res) => {
+  const { origin, destination, departureDate, returnDate } = req.body;
+
+  console.log('Received /getFlightOffers request:', req.body);
+
+  if (!origin || !destination || !departureDate || !returnDate) {
+    return res.status(400).json({
+      error: 'Missing required parameters. Make sure to include origin, destination, departureDate, and returnDate.'
+    });
   }
 
-  const response = await axios.post(
-    "https://test.api.amadeus.com/v1/security/oauth2/token",
-    new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: AMADEUS_CLIENT_ID,
-      client_secret: AMADEUS_CLIENT_SECRET,
-    })
-  );
-
-  cachedToken = response.data.access_token;
-  tokenExpiry = Date.now() + response.data.expires_in * 1000 - 60000;
-  return cachedToken;
-}
-
-app.post("/getFlightOffers", async (req, res) => {
   try {
-    const { origin, destination, departureDate, returnDate } = req.body;
-    console.log("Incoming request:", req.body);
-
-    if (!origin || !destination || !departureDate) {
-      console.error("Missing fields");
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
     const token = await getAccessToken();
-    console.log("Access token obtained:", token.slice(0, 10) + "...");
 
     const params = {
-  originLocationCode: origin,
-  destinationLocationCode: destination,
-  departureDate,
-  returnDate,
-  adults: 1,
-  currencyCode: "USD",
-  max: 5,
-};
+      originLocationCode: origin,
+      destinationLocationCode: destination,
+      departureDate,
+      returnDate,
+      adults: 1,
+      currencyCode: 'USD',
+      max: 5
+    };
 
-console.log("Calling Amadeus with params:", {
-  originLocationCode: origin,
-  destinationLocationCode: destination,
-  departureDate,
-  returnDate,
-  adults: 1,
-  currencyCode: "USD",
-  max: 5,
-});
+    console.log('Calling Amadeus with params:', params);
 
-const response = await axios.get("https://test.api.amadeus.com/v2/shopping/flight-offers", {
-  headers: { Authorization: `Bearer ${token}` },
-  params,
-});
-
-    console.log("Flight response received.");
-    res.json(response.data);
-  } catch (err) {
-  console.error("Amadeus API error:", err.response?.data || err.message);
-  res.status(500).json({ error: err.response?.data || err.message });
-}
-});
-
-app.post("/getHotelOffers", async (req, res) => {
-  try {
-    const { cityCode, checkInDate, checkOutDate } = req.body;
-
-    if (!cityCode || !checkInDate || !checkOutDate) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const token = await getAccessToken();
-    const response = await axios.get("https://test.api.amadeus.com/v2/shopping/hotel-offers", {
+    const response = await axios.get('https://test.api.amadeus.com/v2/shopping/flight-offers', {
       headers: { Authorization: `Bearer ${token}` },
-      params: {
-        cityCode,
-        checkInDate,
-        checkOutDate,
-        adults: 1,
-        currency: "USD",
-        roomQuantity: 1,
-      },
+      params
     });
 
     res.json(response.data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Amadeus API error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Internal server error', details: err.response?.data || err.message });
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("EMBA Travel Assistant Backend is running.");
+// === Hotel Offers ===
+app.post('/getHotelOffers', async (req, res) => {
+  const { cityCode, checkInDate, checkOutDate } = req.body;
+
+  console.log('Received /getHotelOffers request:', req.body);
+
+  if (!cityCode || !checkInDate || !checkOutDate) {
+    return res.status(400).json({
+      error: 'Missing required parameters. Include cityCode, checkInDate, and checkOutDate.'
+    });
+  }
+
+  try {
+    const token = await getAccessToken();
+
+    const params = {
+      cityCode,
+      checkInDate,
+      checkOutDate,
+      adults: 1,
+      currency: 'USD',
+      radius: 30,
+      radiusUnit: 'KM',
+      bestRateOnly: true,
+      roomQuantity: 1
+    };
+
+    console.log('Calling Amadeus with params:', params);
+
+    const response = await axios.get('https://test.api.amadeus.com/v2/shopping/hotel-offers', {
+      headers: { Authorization: `Bearer ${token}` },
+      params
+    });
+
+    res.json(response.data);
+  } catch (err) {
+    console.error('Amadeus API error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Internal server error', details: err.response?.data || err.message });
+  }
 });
 
+// === Start Server ===
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
