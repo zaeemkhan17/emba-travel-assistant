@@ -44,18 +44,22 @@ app.post("/getFlightOffers", async (req, res) => {
     const token = await getAccessToken();
     console.log("Access token obtained:", token.slice(0, 10) + "...");
 
-    const response = await axios.get("https://test.api.amadeus.com/v2/shopping/flight-offers", {
-      headers: { Authorization: `Bearer ${token}` },
-      params: {
-        originLocationCode: origin,
-        destinationLocationCode: destination,
-        departureDate,
-        returnDate,
-        adults: 1,
-        currencyCode: "USD",
-        max: 5,
-      },
-    });
+    const params = {
+  originLocationCode: origin,
+  destinationLocationCode: destination,
+  departureDate,
+  returnDate,
+  adults: 1,
+  currencyCode: "USD",
+  max: 5,
+};
+
+console.log("Calling Amadeus API with params:", params);
+
+const response = await axios.get("https://test.api.amadeus.com/v2/shopping/flight-offers", {
+  headers: { Authorization: `Bearer ${token}` },
+  params,
+});
 
     console.log("Flight response received.");
     res.json(response.data);
