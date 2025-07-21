@@ -12,8 +12,8 @@ app.use(express.json()); // ⬅️ Ensures req.body is parsed correctly
 
 // === Amadeus Token Fetch ===
 async function getAccessToken() {
-  const clientId = process.env.AMADEUS_CLIENT_ID;
-  const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
+  const AMADEUS_CLIENT_ID = process.env.AMADEUS_CLIENT_ID;
+  const AMADEUS_CLIENT_SECRET = process.env.AMADEUS_CLIENT_SECRET;
 
   try {
     const params = new URLSearchParams();
