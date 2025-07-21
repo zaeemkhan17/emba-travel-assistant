@@ -54,7 +54,15 @@ app.post("/getFlightOffers", async (req, res) => {
   max: 5,
 };
 
-console.log("Calling Amadeus API with params:", params);
+console.log("Calling Amadeus with params:", {
+  originLocationCode: origin,
+  destinationLocationCode: destination,
+  departureDate,
+  returnDate,
+  adults: 1,
+  currencyCode: "USD",
+  max: 5,
+});
 
 const response = await axios.get("https://test.api.amadeus.com/v2/shopping/flight-offers", {
   headers: { Authorization: `Bearer ${token}` },
