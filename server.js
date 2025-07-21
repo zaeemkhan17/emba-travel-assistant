@@ -12,8 +12,8 @@ app.use(express.json()); // ⬅️ Ensures req.body is parsed correctly
 
 // === Amadeus Token Fetch ===
 async function getAccessToken() {
-  const clientId = "NAmg8wPrqGt2zsaLQBOWfDEiVGhXdrCP";
-  const clientSecret = "8cSLcbcQVqpxrxKO";
+  const clientId = process.env.AMADEUS_CLIENT_ID;
+  const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
 
   try {
     const response = await axios.post('https://test.api.amadeus.com/v1/security/oauth2/token', null, {
